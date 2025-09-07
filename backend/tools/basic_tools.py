@@ -1,77 +1,35 @@
 """
 auth: AJ Boyd
 date: 7/30/2025
-desc: holds basic gameplay tools for TTRPG agent.
+desc: holds basic gameplay tools for TTRP                    # Combat and special abilities
+                    attacks: list[str] = [], spells: list[str] = [],
+                    resistances: list[str] = [], vulnerabilities: list[str] = []) -> Character:gent.
 """
 import random
-from tools.game_state import game_state
+from .character import Character
+from .game_state import game_state
 
 def attack():
     game_state["player"]["hp"] -= 5
     return game_state["player"]["hp"]
+                  
+def calculator(expression: str) -> float:
+    """
+    Evaluates a mathematical expression and returns the result.
+    Args:
+        expression (str): The mathematical expression to evaluate.
+    Returns:
+        float: The result of the evaluated expression.
+    """
+    try:
+        # Safely evaluate the expression
+        result = eval(expression, {"__builtins__": None}, {})
+        if not isinstance(result, (int, float)):
+            raise ValueError("Expression did not evaluate to a number.")
+        return result
+    except Exception as e:
+        raise ValueError(f"Invalid expression: {expression}. Error: {e}")
 
-class NPC:
-    def __init__(self, name: str, race: str, class_type: str, alignment: str,
-                 strength: int, dexterity: int, intelligence: int,
-                 constitution: int, wisdom: int, charisma: int, speed: int,
-                 hp: int, hit_dice: int, mood: int, spells: list = None):
-        self.name = name
-        self.race = race
-        self.class_type = class_type
-        self.alignment = alignment
-        self.stats = {
-            "strength": strength,
-            "dexterity": dexterity,
-            "intelligence": intelligence,
-            "constitution": constitution,
-            "wisdom": wisdom,
-            "charisma": charisma,
-        }
-        self.stat_modifiers = {
-            "strength": (strength - 10) // 2,
-            "dexterity": (dexterity - 10) // 2,
-            "intelligence": (intelligence - 10) // 2,
-            "constitution": (constitution - 10) // 2,
-            "wisdom": (wisdom - 10) // 2,
-            "charisma": (charisma - 10) // 2,
-        }
-        self.speed = speed
-        self.hp = hp
-        self.hit_dice = hit_dice
-        self.mood = mood
-        self.spells = spells if spells is not None else []
-
-    def __repr__(self):
-        return (f"NPC(name={self.name!r}, race={self.race!r}, class_type={self.class_type!r}, "
-                f"alignment={self.alignment!r}, stats={self.stats}, speed={self.speed}, "
-                f"hp={self.hp}, hit_dice={self.hit_dice}, spells={self.spells})")
-    
-class Player(NPC):
-    def __init__(self, name: str, race: str, class_type: str, alignment: str,
-                 strength: int, dexterity: int, intelligence: int,
-                 constitution: int, wisdom: int, charisma: int, speed: int,
-                 hp: int, hit_dice: int, mood: int, spells: list[str] = None,
-                 equipment: list[str] = None, armor_class: int = 10,
-                 skills: list[str] = None, tool_proficiencies: list[str] = None,
-                 saving_throws: list[str] = None, traits: list[str] = None):
-        super().__init__(name, race, class_type, alignment,
-                         strength, dexterity, intelligence,
-                         constitution, wisdom, charisma, speed,
-                         hp, hit_dice, mood, spells)
-        self.equipment = equipment if equipment is not None else []
-        self.armor_class = armor_class
-        self.skills = skills if skills is not None else []
-        self.tool_proficiencies = tool_proficiencies if tool_proficiencies is not None else []
-        self.saving_throws = saving_throws if saving_throws is not None else []
-        self.traits = traits if traits is not None else []
-
-    def __repr__(self):
-        return (f"Player(name={self.name!r}, race={self.race!r}, class_type={self.class_type!r}, "
-                f"alignment={self.alignment!r}, stats={self.stats}, speed={self.speed}, hp={self.hp}, "
-                f"hit_dice={self.hit_dice}, mood={self.mood}, spells={self.spells}, equipment={self.equipment}, "
-                f"armor_class={self.armor_class}, skills={self.skills}, tool_proficiencies={self.tool_proficiencies}, "
-                f"saving_throws={self.saving_throws}, traits={self.traits})")
-    
 def roll_dice(n: int = 1, sides: int = 20) -> list[int]:
     """
     Simulates rolling a dice with the given number of sides (default 20).
@@ -89,7 +47,7 @@ def roll_dice(n: int = 1, sides: int = 20) -> list[int]:
 
 def roll_stat(stat: str) -> int:
     """
-    Rolls a stat based on the stat name.
+    When the player wants to perform an action that may result in failure, roll a skill check.
     Args:
         stat (str): The name of the stat to roll.
     Returns:
@@ -97,87 +55,98 @@ def roll_stat(stat: str) -> int:
     """
     return roll_dice(20)
 
-def create_npc(name: str, race: str, class_type: str, alignment: str, 
-               strength: int, dexterity: int, intelligence: int, 
-               constitution: int, wisdom: int, charisma:int, speed: int,
-               HP: int, hit_dice: int, spells: list[str] = None) -> NPC:
+def read_objectives() -> list[str]:
     """
-    Creates a non-player character (NPC) with the given attributes.
+    Returns the current objectives from the game state.
+    """
+    return game_state.objectives
+
+def read_players() -> list[Character]:
+    """
+    Returns the current players from the game state.
+    """
+    return game_state.players
+
+def create_character(is_player: bool, name: str, race: str, class_type: str, alignment: str,
+                    strength: int, dexterity: int, intelligence: int,
+                    constitution: int, wisdom: int, charisma: int, speed: int,
+                    hp: int, hit_dice: int, mood: int,
+                    # Skill proficiencies
+                    acrobatics: int = 0, animal_handling: int = 0, arcana: int = 0,
+                    athletics: int = 0, deception: int = 0, history: int = 0,
+                    insight: int = 0, intimidation: int = 0, investigation: int = 0,
+                    medicine: int = 0, nature: int = 0, perception: int = 0,
+                    performance: int = 0, persuasion: int = 0, religion: int = 0,
+                    sleight_of_hand: int = 0, stealth: int = 0, survival: int = 0,
+                    # Combat and special abilities
+                    attacks: list[dict[str, str | int]] = [], 
+                    spells: list[dict[str, str | int]] = [],
+                    resistances: list[dict[str, str]] = [], 
+                    vulnerabilities: list[dict[str, str]] = []) -> Character:
+    """
+    Creates a character (player or NPC) with the given attributes.
     Args:
-        name (str): The name of the NPC
-        race (str): The race of the NPC
-        class_type (str): The class of the NPC
-        alignment (str): The alignment of the NPC
-        strength (int): The strength score of the NPC
-        dexterity (int): The dexterity score of the NPC
-        intelligence (int): The intelligence score of the NPC
-        constitution (int): The constitution score of the NPC
-        wisdom (int): The wisdom score of the NPC
-        charisma (int): The charisma score of the NPC
-        speed (int): The speed of the NPC
-        HP (int): The hit points of the NPC
-        hit_dice (int): The hit dice of the NPC
-        mood (int): How much the NPC likes the player, affecting interactions
-        spells (list): A list of spells the NPC can cast
-    Returns:
-        NPC: An NPC object representing the created NPC.
-    """
-    npc = NPC(
-        name=name,
-        race=race,
-        class_type=class_type,
-        alignment=alignment,
-        strength=strength,
-        dexterity=dexterity,
-        intelligence=intelligence,
-        constitution=constitution,
-        wisdom=wisdom,
-        charisma=charisma,
-        speed=speed,
-        hp=HP,
-        hit_dice=hit_dice,
-        spells=spells
-    )
-
-    game_state.add_npc(npc) # add npc to game state
-    return npc
-
-
-def create_player(name: str, race: str, class_type: str, alignment: str,
-                 strength: int, dexterity: int, intelligence: int,
-                 constitution: int, wisdom: int, charisma: int, speed: int,
-                 hp: int, hit_dice: int, mood: int, spells: list[str] = None,
-                 equipment: list[str] = None, armor_class: int = 10,
-                 skills: list[str] = None, tool_proficiencies: list[str] = None,
-                 saving_throws: list[str] = None, traits: list[str] = None) -> Player:
-    """
-    Creates a player character with the given attributes. Roll for stats to assign their values
-    Args:
-        name (str): The name of the player
-        race (str): The race of the player
-        class_type (str): The class of the player
-        alignment (str): The alignment of the player
+        is_player (bool): Whether this is a player character (True) or NPC (False)
+        name (str): The name of the character
+        race (str): The race of the character
+        class_type (str): The class of the character
+        attacks (list[dict]): List of attack dictionaries with name, damage, and type
+        spells (list[dict]): List of spell dictionaries with name, level, and school
+        resistances (list[dict]): List of damage resistance dictionaries with type and description
+        vulnerabilities (list[dict]): List of vulnerability dictionaries with type and description
+        alignment (str): The alignment of the character
         strength (int): The strength score
         dexterity (int): The dexterity score
         intelligence (int): The intelligence score
         constitution (int): The constitution score
         wisdom (int): The wisdom score
         charisma (int): The charisma score
+        speed (int): Movement speed in feet
+        hp (int): Current hit points
+        hit_dice (int): Type of hit dice (e.g., 6 for d6, 8 for d8)
+        mood (int): Character's disposition value
+        
+        # Skill proficiencies (all default to 0 for no proficiency)
+        acrobatics (int): Proficiency in Acrobatics (DEX)
+        animal_handling (int): Proficiency in Animal Handling (WIS)
+        arcana (int): Proficiency in Arcana (INT)
+        athletics (int): Proficiency in Athletics (STR)
+        deception (int): Proficiency in Deception (CHA)
+        history (int): Proficiency in History (INT)
+        insight (int): Proficiency in Insight (WIS)
+        intimidation (int): Proficiency in Intimidation (CHA)
+        investigation (int): Proficiency in Investigation (INT)
+        medicine (int): Proficiency in Medicine (WIS)
+        nature (int): Proficiency in Nature (INT)
+        perception (int): Proficiency in Perception (WIS)
+        performance (int): Proficiency in Performance (CHA)
+        persuasion (int): Proficiency in Persuasion (CHA)
+        religion (int): Proficiency in Religion (INT)
+        sleight_of_hand (int): Proficiency in Sleight of Hand (DEX)
+        stealth (int): Proficiency in Stealth (DEX)
+        survival (int): Proficiency in Survival (WIS)
+        
+        # Combat and special abilities
+        attacks (list): List of attacks the character can perform
+        spells (list): List of spells the character knows
+        resistances (list): Damage types the character is resistant to
+        vulnerabilities (list): Damage types the character is vulnerable to
+        
+    Returns:
+        Character: A new Character instance with the specified attributes
         speed (int): The speed
         hp (int): The hit points
         hit_dice (int): The hit dice
-        mood (int): How much the player likes themselves, affecting interactions
-        spells (list of str): A list of spells the player can cast
-        equipment (list of str): Equipment carried by the player
-        armor_class (int): The player's armor class
-        skills (list of str): The player's skills
-        tool_proficiencies (list of str): The player's tool proficiencies
-        saving_throws (list of str): The player's saving throws
-        traits (list of str): The player's traits
+        mood (int): The character's mood, affecting interactions
+        attacks (list): A list of attacks the character can perform
+        spells (list): A list of spells the character can cast
+        resistances (list): A list of damage types the character is resistant to
+        vulnerabilities (list): A list of damage types the character is vulnerable to
     Returns:
-        Player: A Player object representing the created player.
+        Character: A Character object representing the created character.
     """
-    player = Player(
+    character = Character(
+        playable=is_player,
         name=name,
         race=race,
         class_type=class_type,
@@ -192,42 +161,61 @@ def create_player(name: str, race: str, class_type: str, alignment: str,
         hp=hp,
         hit_dice=hit_dice,
         mood=mood,
-        spells=spells,
-        equipment=equipment,
-        armor_class=armor_class,
-        skills=skills,
-        tool_proficiencies=tool_proficiencies,
-        saving_throws=saving_throws,
-        traits=traits
+        # Skill proficiencies
+        acrobatics=acrobatics,
+        animal_handling=animal_handling,
+        arcana=arcana,
+        athletics=athletics,
+        deception=deception,
+        history=history,
+        insight=insight,
+        intimidation=intimidation,
+        investigation=investigation,
+        medicine=medicine,
+        nature=nature,
+        perception=perception,
+        performance=performance,
+        persuasion=persuasion,
+        religion=religion,
+        sleight_of_hand=sleight_of_hand,
+        stealth=stealth,
+        survival=survival,
+        # Combat and special abilities
+        attacks=attacks if attacks is not None else [],
+        spells=spells if spells is not None else [],
+        resistances=resistances if resistances is not None else [],
+        vulnerabilities=vulnerabilities if vulnerabilities is not None else []
     )
-    game_state.players.append(player)
-    return player
 
-def set_player_hp(player_name: str, new_hp: int) -> None:
-    """
-    Sets the player's HP to a new value.
-    Args:
-        player_name (str): The name of the player whose HP is being set.
-        new_hp (int): The new HP value to set.
-    """
-    for player in game_state.players:
-        if player.name == player_name:
-            player.hp = new_hp
-            return f"{player.name}'s HP updated to {new_hp}"
-    return "Player not found."
+    print(f"Created character: {repr(character)},")
+    if is_player:
+        game_state.players.append(character)
+    else:
+        game_state.add_npc(character)
+    
+    return character
 
-def set_mood(npc_name: str, new_mood: int) -> None:
+def set_character_property(chacter_name: str, property: str, value) -> None:
     """
-    Sets the mood of an NPC to a new value.
+    Sets a property of a character (player or NPC) to a new value.
     Args:
-        npc_name (str): The name of the NPC whose mood is being set.
-        new_mood (int): The new mood value to set.
+        character_name (str): The name of the character to modify
+        property (str): The property to set (e.g., "hp", "mood", "stats['strength']")
+        value: The new value to assign to the property
     """
-    for npc in game_state.npcs:
-        if npc.name == npc_name:
-            npc.mood = new_mood
-            return f"{npc.name}'s mood updated to {new_mood}"
-    return "NPC not found."
+    for char in game_state.players + game_state.npcs:
+        if char.name == chacter_name:
+            if property.startswith("stats["):
+                stat_name = property.split("[")[1].strip("]'\"")
+                if stat_name in char.stats:
+                    char.stats[stat_name] = value
+                    char.stat_modifiers[stat_name] = (value - 10) // 2
+            elif hasattr(char, property):
+                setattr(char, property, value)
+            else:
+                raise ValueError(f"Property {property} not found on character {chacter_name}.")
+            return
+    raise ValueError(f"Character {chacter_name} not found.")
 
 
 def roll_stats(stat: str) -> dict[str, int]:

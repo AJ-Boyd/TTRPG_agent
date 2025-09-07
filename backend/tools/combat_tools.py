@@ -3,8 +3,8 @@ auth: AJ Boyd
 date: 7/30/2025
 desc: holds the combat tools for TTRPG agent, including damage calculation and combat mechanics.
 """
-from tools.basic_tools import roll_dice, NPC, Player
-from tools.game_state import game_state
+from .basic_tools import roll_dice
+from .game_state import game_state
 
 def attack():
     game_state["player"]["hp"] -= 5
